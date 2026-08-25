@@ -1,0 +1,411 @@
+{
+  "info": {
+    "_postman_id": "a9b8c7d6-e5f4-4321-abcd-1234567890ab",
+    "name": "Resource Booking System REST API",
+    "description": "Production-ready Postman collection for the RESTful Resource Booking System assessment test.\nIncludes JWT Authentication, RBAC (ADMIN & USER), Resources CRUD, and Reservations Filtering & Pagination.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login as ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('adminToken', jsonData.data.token);",
+                  "    pm.test('Admin JWT token received and saved to collection variable', function () {",
+                  "        pm.expect(jsonData.data.token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login as USER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('userToken', jsonData.data.token);",
+                  "    pm.test('User JWT token received and saved to collection variable', function () {",
+                  "        pm.expect(jsonData.data.token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"User@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register New User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newcandidate@example.com\",\n  \"password\": \"SecurePass@123\",\n  \"fullName\": \"John Doe\",\n  \"role\": \"ROLE_USER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Resources (ADMIN & USER)",
+      "item": [
+        {
+          "name": "Get All Resources (Public / USER / ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources?page=0&size=10&sortBy=id&sortDirection=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sortBy", "value": "id" },
+                { "key": "sortDirection", "value": "asc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Resource By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Resource (ADMIN Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Innovation Lab Alpha\",\n  \"description\": \"Dedicated prototyping lab with 3D printers and laser cutters\",\n  \"type\": \"LAB\",\n  \"capacity\": 12,\n  \"location\": \"Building B, Suite 101\",\n  \"pricePerHour\": 85.50,\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/resources",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources"]
+            }
+          }
+        },
+        {
+          "name": "Update Resource (ADMIN Only)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Innovation Lab Alpha Updated\",\n  \"description\": \"Updated lab description with 4K laser cutter\",\n  \"type\": \"LAB\",\n  \"capacity\": 15,\n  \"location\": \"Building B, Suite 101\",\n  \"pricePerHour\": 95.00,\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/resources/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Resource (ADMIN Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/6",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources", "6"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Reservations",
+      "item": [
+        {
+          "name": "Create Reservation (USER identity taken from JWT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": 1,\n  \"startTime\": \"2026-09-01T10:00:00\",\n  \"endTime\": \"2026-09-01T12:00:00\",\n  \"notes\": \"Client architecture review meeting\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"]
+            }
+          }
+        },
+        {
+          "name": "Get Reservations (USER: Own only / ADMIN: All)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations?page=0&size=10&sortBy=createdAt&sortDirection=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortDirection", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Reservations (Status, Min Price, Max Price)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations?status=CONFIRMED&minPrice=50.00&maxPrice=500.00&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"],
+              "query": [
+                { "key": "status", "value": "CONFIRMED" },
+                { "key": "minPrice", "value": "50.00" },
+                { "key": "maxPrice", "value": "500.00" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Reservation By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Reservation Status (ADMIN Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/2/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "2", "status"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Reservation (USER or ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/2/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "2", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Delete Reservation (ADMIN Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/4",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "4"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
